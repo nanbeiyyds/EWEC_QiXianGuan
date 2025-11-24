@@ -1,0 +1,288 @@
+<html>
+    <head>
+        <title>Eventos dinamicos</title>
+        <style>
+            .elemento-dinamico
+            {
+                display: inline-block;
+                width: 120px;
+                height: 120px;
+                margin: 10px;
+                padding: 10px;
+                background-color: lightblue;
+                border: 2px solid blue;
+                text-align: center;
+                transition: all 0.3s;
+                cursor: pointer;
+                border-radius: 8px;
+            }
+            .elemento-grande
+            {
+                transform: scale(1.2);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
+            .contenedor
+            {
+                border: 2px solid #ccc;
+                padding: 20px;
+                margin: 20px 0;
+                min-height: 400px;
+                border-radius: 8px;
+            }
+            .estadisticas
+            {
+                background-color: #f5f5f5;
+                padding: 10px;
+                margin: 10px 0;
+                border-radius: 5px;
+                font-size: 15px;
+            }
+            .controles
+            {
+                margin: 15px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Control de eventos en elementos dinamicos</h1>
+
+        <!--Botones para crear elementos-->
+        <div class="controles">
+            <button id="crear">Crear elemento</button>
+            <div style="display: inline-block; margin-left: 10px;">
+                <input type="number" id="cantidad" min="1" max="20" value="3" style="width: 60px;">
+                <button id="multiple">Crear varios elementos</button>
+            </div>
+            <button id="limpiar">Limpiar todo los elementos</button>
+        </div>
+
+        <!--Estadisticas-->
+        <div class="estadisticas">
+            <span id="contador">Elementos credos : 0 </span>
+            <span id="accion"> | Última acción</span>
+        </div>
+
+        <!--Contenedor principal-->
+        <div id="contenedorPrincipal" class="contenedor">
+            <p>Los elementos dinámicos aparecerán aquí ...</p>
+        </div>
+        <script>
+            //variables 
+            const botonCrear = document.getElementById('crear');
+            const botonMultiple = document.getElementById('multiple');
+            const botonLimpiar = document.getElementById('limpiar');
+            const principal = document.getElementById('contenedorPrincipal');
+            const contador = document.getElementById('contador');
+            const ultimaAccion = document.getElementById('accion');
+            let totalElementos = 0;
+
+            //funciones
+            //crear un elemento dinamico
+            function crearElementoDinamico()
+            {
+                //comprobar el total del elemento si superado a 50 o no
+                if(totalElementos >= 50)
+                {
+                    alert("No se pueden crear más de 50 elementos en total");
+                    return;   
+                }
+
+                totalElementos++;
+
+                //crear nuevo elemento div
+                const nuevoElemento = document.createElement('div');
+                nuevoElemento.className = 'elemento-dinamico';
+                nuevoElemento.setAttribute('data-id',totalElementos);
+
+                //estructura HTML del elemento
+                nuevoElemento.innerHTML = `
+                <strong>#${totalElementos}</strong>
+                <div>
+                    clic:color<br>
+                    Doble:texto<br>
+                    Mouse:tamaño
+                </div>`;
+                
+                //generar color RGB aleatorio
+                const r = Math.floor(Math.random() * 256);
+                const g = Math.floor(Math.random() * 256);
+                const b = Math.floor(Math.random() * 256);
+
+                //aplicar color de fondo
+                nuevoElemento.style.backgroundColor = `rgb(${r},${g},${b})`;
+
+                //añadir elemento al contenedor principal
+                principal.appendChild(nuevoElemento);
+                //actualizar estadisticas
+                actualizarEstadisticas(`creado elemento ${totalElementos}`);
+            }
+
+            //crear múltiples elementos
+            function crearMultiplesElementos()
+            {
+                //obtener cantidad del input
+                const cantidadInput = document.getElementById('cantidad');
+                let cantidad = parseInt(cantidadInput.value);
+
+                //validar entrada
+                if(isNaN(cantidad) || cantidad < 1)
+                {
+                    cantidad = 1;
+                }
+
+                //calcular elementos restantes 
+                const elementosRestantes = 50 - totalElementos;
+                if(elementosRestantes <= 0)
+                {
+                    alert("Ya se han creado 50 elementos, no se pueden crear más");
+                    return;
+                }
+
+                //ajustar cantidad si es necesario
+                if(cantidad > elementosRestantes)
+                {
+                    cantidad = elementosRestantes;
+                    alert(`Solo se pueden crear ${elementosRestantes} elementos más (máximo 50 en total)`);
+                }
+
+                //crear elementos
+                for(let i=0; i< cantidad; i++)
+                {
+                    crearElementoDinamico();
+                }
+            }
+
+            //limpiar todos los elementos
+            function limpiarTodo()
+            {
+                //seleccionar todos los elementos dinámicos
+                const elementos = document.querySelectorAll('.elemento-dinamico');
+
+                //eliminar cada elemento
+                elementos.forEach(elemento => elemento.remove());
+                //reiniciar contador
+                totalElementos = 0;
+                //actualizar estadisticas
+                actualizarEstadisticas('Todo limpiado');
+            }
+
+            //actualizar estadisticas en la interfaz
+            function actualizarEstadisticas(accion)
+            {
+                contador.textContent=`Elemento creado : ${totalElementos}`;
+                ultimaAccion.textContent=` | Última acción : ${accion}`;
+            }
+
+            //eventos de botones
+            botonCrear.addEventListener('click',crearElementoDinamico);
+            botonMultiple.addEventListener('click',crearMultiplesElementos);
+            botonLimpiar.addEventListener('click',limpiarTodo);
+
+            //delegacion de eventos
+            //1. click-cambiar color
+            principal.addEventListener('click',function(evento)
+            {
+                //encontrar el elemento dinamico más cercano
+                const elemento = evento.target.closest('.elemento-dinamico');
+
+                if(elemento)
+                {
+                    //generar nuevo color RGB aleatorio
+                    const r = Math.floor(Math.random() * 256);
+                    const g = Math.floor(Math.random() * 256);
+                    const b = Math.floor(Math.random() * 256);
+
+                    //aplicar nuevo color
+                    elemento.style.backgroundColor = `rgb(${r},${g},${b})`;
+                }
+            });
+
+            //2.doble click - cambiar texto
+            principal.addEventListener('dblclick',function(evento)
+            {
+                const elemento = evento.target.closest('.elemento-dinamico');
+
+                if(elemento)
+                {
+                    //lista de textos aleatorios
+                    const textos = ['HOLA','CLICK','DINAMICO','JAVASCRIPT','EVENTO','WEB','TEXTO 2','TEXTO 10','2DAW','BUENOS DIAS'];
+                    const textoAleatorio = textos[Math.floor(Math.random() * textos.length)];
+                    //cambiar texto del elemento strong
+                    elemento.querySelector('strong').textContent = textoAleatorio;
+                }
+            });
+
+            //3.Mouseover - agrandar
+            principal.addEventListener('mouseover',function(evento) 
+            {
+                const elemento = evento.target.closest('.elemento-dinamico');
+                if(elemento)
+                {
+                    //añadir clase para agrandar
+                    elemento.classList.add('elemento-grande');
+                }
+            });
+
+            //4.Mouseout - restaurar tamaño
+            principal.addEventListener('mouseout',function(evento)
+            {
+                const elemento = evento.target.closest('.elemento-dinamico');
+                if(elemento)
+                {
+                    //remover clase de agrandamiento
+                    elemento.classList.remove('elemento-grande');
+                }
+            });
+
+            //5.teclado - funciones
+            document.addEventListener('keydown',function(evento)
+            {
+                //espacio : crear elemento
+                if(evento.code === 'Space')
+                {
+                    evento.preventDefault();//prevenir scroll
+                    crearElementoDinamico();
+                }
+
+                //escape:limpiar todo
+                if(evento.code === 'Escape')
+                {
+                    limpiarTodo();
+                }
+
+                //delete:eliminar último elemento
+                if(evento.code === 'Delete')
+                {
+                    const elementos = document.querySelectorAll('.elemento-dinamico');
+                    if(elementos.length > 0)
+                    {
+                        //eliminar último elemento
+                        elementos[elementos.length - 1].remove();
+                        //actualizar contador
+                        totalElementos = Math.max(0,totalElementos - 1);
+                        //actualizar estadísticas
+                        actualizarEstadisticas('último elemento eliminado');
+                    }
+                }
+            });
+
+            //6.click derecho - rotar elemento
+            principal.addEventListener('contextmenu',function(evento)
+            {
+                const elemento = evento.target.closest('.elemento-dinamico');
+                if(elemento)
+                {
+                    evento.preventDefault(); //prevenir menú contextual
+                    //aplicar rotación de 180 grados
+                    elemento.style.transition = 'transform 0.3s';
+                    elemento.style.transform = 'rotate(180deg)';
+
+                    //restaurar rotación depués de 300ms
+                    setTimeout(() => {
+                        elemento.style.transform='rotate(0deg)';
+                    }, 300);
+                }
+            });
+        </script>
+    </body>
+</html>

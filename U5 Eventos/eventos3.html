@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Eventos 3</title>
+    <!--En la próxima tarea relacionada con los eventos, prueba su conocimiento del burbujeo de eventos.
+    Nos gustaría que estableciera un oyente de eventos en el <button> El elemento padre de (<div class = "button-bar">....</div>) que,
+    cuando se invoque haciendo clic en cualquiera de los botones, estableceráel fondo de la button-bar al color contenido en el botón 
+    data-color atributo
+    Queremos que resuelvas esto sin hacer un bucle a través de todos los botones y darle a cada uno su propio oyente de eventos-->
+        <style>
+            .button-bar
+            {
+                padding: 10px;
+                display: flex;
+                gap:10px;
+                border: 1px solid black;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Evento 3</h2>
+        <div class="button-bar">
+            <button data-color="red">Rojo</button>
+            <button data-color="Green">Verde</button>
+            <button data-color="Blue">Azul</button>
+            <button data-color="Yellow">Amarillo</button>
+        </div>
+        <script>
+            const buttonBar = document.querySelector(".button-bar");
+            buttonBar.addEventListener("click", function(event)
+            {
+                const elemento = event.target;
+
+                if(elemento.tagName == "BUTTON")
+                {
+                    const color = elemento.getAttribute("data-color");
+                    buttonBar.style.backgroundColor = color;
+                }   
+            })
+        </script>
+    </body>
+</html>
