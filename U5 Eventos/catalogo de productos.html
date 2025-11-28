@@ -1,0 +1,394 @@
+<html>
+    <head>
+        <title>Catálogo de productos</title>
+        <style>
+            body
+            {
+                font-family: Arial, Helvetica, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .controls
+            {
+                margin: 20px 0;
+                padding: 10px;
+                background: rgb(135, 232, 223);
+            }
+            button
+            {
+                padding: 8px 16px;
+                margin: 5px;
+                cursor: pointer;
+            }
+            .form-container
+            {
+                display: none;
+                border: 1px solid #db9f9f;
+                padding: 20px;
+                margin: 20px 0;
+                background: wheat;
+            }
+            .form-group
+            {
+                margin: 10px 0;
+            }
+            label
+            {
+                display: block;
+                margin-bottom: 5px;
+            }
+            input, textarea
+            {
+                width: 100%;
+                padding: 8px;
+                margin: 5px 0;
+            }
+            .error
+            {
+                color: red;
+                font-size: 14px;
+                display: none;
+            }
+            .catalog
+            {
+                display: grid;
+                grid-template-columns: repeat(auto-fill,minmax(200px 1fr));
+                gap: 15px;
+                margin: 20px 0;
+            }
+            .product-card
+            {
+                border: 1px solid #b8e088;
+                padding: 10px;
+                text-align: center;
+            }
+            .product-image
+            {
+                object-fit: cover;
+                cursor: pointer;
+            }
+            .product-name
+            {
+                margin: 10px 0;
+                font-weight: bold;
+            }
+            .product-details
+            {
+                display: none;
+                margin-top: 10px;
+                padding: 10px;
+                background: #f095ee;
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Catálogo de productos</h1>
+        <div class="controls">
+            <button id="addProductBtn">Añadir Producto</button>
+            <span id="productCount">Total : 0 productos</span>
+            <button id="clearCatalogBtn">Limpiar Catálogo</button>
+        </div>
+
+        <div id="productForm" class="form-container">
+            <h2>Nuevo productos</h2>
+            <form id="productFormElement">
+                <div class="form-group">
+                   <label for="productId">ID del producto : </label> 
+                   <input type="text" id="productId">
+                   <div class="error" id="productIdError">ID obligatorio y único</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="productName">Nombre : </label>
+                    <input type="text" id="productName">
+                    <div class="error" id="productNameError">Nombre obligatorio</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="productDescription">Descripción : </label>
+                    <textarea id="productDescription" rows="3"></textarea>
+                    <div class="error" id="productDescriptionError">Descripción obligatorio</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="productPrice">Precio (€) : </label>
+                    <input type="number" id="productPrice" min="0" step="0.01">
+                    <div class="error" id="productPriceError">Precio debe ser positivo</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="productImage">Imagen : </label>
+                    <input type="file" id="productImage" accept="image/*">
+                    <div class="error" id="productImageError">Imagen obligatoria</div>
+                </div>
+
+                <button type="submit">Guardar Producto</button>
+                <button type="button" id="cancelBtn">Cancelar</button>
+            </form>
+        </div>
+
+        <div id="catalog" class="catalog">
+            <div class="empty-catalog">
+                <p>No hay productos en el catálogo</p>
+            </div>
+        </div>
+        <script>
+            //variables
+            //array para almacenar todos los productos
+            let products = [];
+            //contador para llevar el número total del productos
+            let productCount = 0;
+
+            //doton para mostrar el formulario de añadir producto
+            const addProductBtn = document.getElementById('addProductBtn');
+            //boton para limpiar todo el catalogo
+            const clearCatalogBtn = document.getElementById('clearCatalogBtn');
+            //contenedor del formulario de producto
+            const productForm = document.getElementById('productForm');
+            //elemento del formulario HTML
+            const productFormElement = document.getElementById('productFormElement');
+            //boton para cancelar la creacion de producto
+            const cancelBtn = document.getElementById('cancelBtn');
+            //contenedor donde se muestran todos los productos
+            const catalog = document.getElementById('catalog');
+            //elemento que muestra el contador de productos
+            const productCountElement = document.getElementById('productCount');
+            //mensaje que se muestra cuando el catalogo esta vacio
+            const emptyCatalogMessage = document.querySelector('.empty-catalog');
+
+            //cuando se hace click en "Añadir Producto", mostrar el formulario
+            addProductBtn.addEventListener('click',showProductForm);
+            //cuando se hace click en "limpiar Catálogo", vaciar todo
+            clearCatalogBtn.addEventListener('click',clearCatalog);
+            //cuando se hace click en "cancelar",ocultar el formulario
+            cancelBtn.addEventListener('click',hideProductForm);
+            //cuando se envia el formulario, procesar los datos
+            productFormElement.addEventListener('submit',handleFormSubmit);
+
+            //funciones
+            //mostrar el formulario para añadir un nuevo producto
+            function showProductForm()
+            {
+                productForm.style.display = 'block';
+            }
+            //ocultar el formulario de producto y resetearlo
+            function hideProductForm()
+            {
+                productForm.style.display = 'none';
+                resetForm();
+            }
+            //resetear el formulario a su estado inicial
+            function resetForm()
+            {
+                //limpiar todos los campos del formulario
+                productFormElement.reset();
+                //ocultar todos los mensajes de error
+                const errorElements = document.querySelectorAll('.error');
+                errorElements.forEach(error => {
+                    error.style.display = 'none';
+                });
+            }
+            //manejar el envio del formulario cuando el usuario intenta crear un producto
+            function handleFormSubmit(event)
+            {
+                //prevenir el comportamiento por defecto del formulario (recargar página)
+                event.preventDefault();
+                //obtener los valores de todos los campos del formulario
+                const productId = document.getElementById('productId').value.trim();
+                const productName = document.getElementById('productName').value.trim();
+                const productDescription = document.getElementById('productDescription').value.trim();
+                const productPrice = parseFloat(document.getElementById('productPrice').value);
+                const productImage = document.getElementById('productImage').files[0];
+
+                //validar que todos los campos sean correctos
+                const isValid = validateForm(productId,productName,productDescription,productPrice,productImage);
+                //si la validacion es exitosa, crear el producto
+                if(isValid)
+                {
+                    createProduct(productId,productName,productDescription,productPrice,productImage);
+                    hideProductForm();
+                }
+            }
+
+            //validar todos los campos del formulario de crear el producto
+            function validateForm(productId,productName,productDescription,productPrice,productImage)
+            {
+                let isValid = true;
+                //ocultar todos los mensaje de error primero
+                const errorElements = document.querySelectorAll('.error');
+                errorElements.forEach(error => {
+                    error.style.display = 'none';
+                });
+                //validar que el ID no este vacio y sea unico
+                if(!productId)
+                {
+                    document.getElementById('productIdError').style.display = 'block';
+                    isValid = false;
+                }
+                else if (products.some(product => product.id === productId))
+                {
+                    document.getElementById('productIdError').textContent = 'Este ID ya existe';
+                    document.getElementById('productIdError').style.display = 'block';
+                    isValid = false;
+                }
+
+                //validar que el nombre no esté vacio
+                if(!productName)
+                {
+                    document.getElementById('productNameError').style.display = 'block';
+                    isValid = false;
+                }
+                //validar que la descripcion no este vacio
+                if(!productDescription)
+                {
+                    document.getElementById('productDescriptionError').style.display = 'block';
+                    isValid = false;
+                }
+                //validar que el precio sea un numeor positivo
+                if(isNaN(productPrice) || productPrice <= 0)
+                {
+                    document.getElementById('productPriceError').style.display = 'block';
+                    isValid = false;
+                }
+                //validar que se haya seleccionada una imagen
+                if(!productImage)
+                {
+                    document.getElementById('productImageError').style.display = 'block';
+                    isValid = false;
+                }
+                return isValid;
+            }
+            //crear un nuevo producto y añadir al catalogo
+            function createProduct(id,name,description,price,imageFile)
+            {
+                //crear un objeto con toda la informacion del producto
+                const product = 
+                {
+                    id: id,
+                    name: name,
+                    description: description,
+                    price: price,
+                    imageUrl: URL.createObjectURL(imageFile)
+                    //crear URL temporal para la imagen
+                };
+                //añadir el producto al array de productos
+                products.push(product);
+                productCount++;
+                //actualizar el contador en la interfaz
+                updateProductCount();
+                //crear el elemento HTML para mostrar el producto
+                createProductElement(product);
+                //ocultar el mensaje de cataloho vacio si es necesario
+                if(emptyCatalogMessage.style,display !== 'none')
+                {
+                    emptyCatalogMessage.style.display='none';
+                }
+            }
+
+            //crear el elemento HTML para representar un producto en el catalogo
+            function createProductElement(product)
+            {
+                //crear un div para la tarjeta del producto
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.dataset.productId = product.id;
+
+                //definir la estructura HTML interna de la tarjeta
+                productCard.innerHTML = `
+                <img src="${product.imageUrl}" alt="${product.name}" class="product-image">
+                <div class="product-name">${product.name}</div>
+                <div class="product-details>
+                    <p><strong>ID:</strong>${product.id}</p>
+                    <p><strong>Nombre:</strong>${product.name}</p>
+                    <p><strong>Precio:</strong>${product.price.toFixed(2)}</p>
+                    <p><strong>Descripcion:</strong>${product.description}</p>
+                </div>
+                `;
+
+                //añadir evento para mostrar/ocultar detalles al hacer click en la imagen
+                const productImage = productCard.querySelector('.product-image');
+                productImage.addEventListener('click',toggleProductDetails);
+                //añadir evento para eliminar producto con clic derecho
+                productCard.addEventListener('contextmenu',deleteProduct);
+                //añadir la tarjeta al contenedor del catalogo
+                catalog.appendChild(productCard);
+            }
+            //mostrar u ocultar, los detalles del producto al hacer clic en su imagen
+            function toggleProductDetails(event)
+            {
+                //encontrar la tarjeta de producto mas cercana al elemento clickeado
+                const productCard = event.target.closest('.product-card');
+                //encontrar el contenedor de detalles dentro de esta tarjeta
+                const productDetails = productCard.querySelector('.product-details');
+                //alternar la visibilidad de los detalles (mostrar/ocultar)
+                if(productDetails.style.display === 'block')
+                {
+                    productDetails.style.display = 'none';
+                }
+                else
+                {
+                    productDetails.style.display = 'block';
+                }
+            }
+            //eliminar un producto del catalogo usando click derecho
+            function deleteProduct(event)
+            {
+                //prevenir que aparezca el menu contextual del navegador
+                event.preventDefault();
+                //encontrar la tarjeta de producto que recibira el clic derehco
+                const productCard = event.target.closest('.product-card');
+                const productId = productCard.dataset.productId;
+
+                //pedir confrimacion antes de eliminar
+                if(confirm(`¿Eliminar el producto ${productId}?`))
+                {
+                    //filtrar el producto del array de productos
+                    products = products.filter(product => product.id !== productId);
+                    productCount--;
+                    //eliminar el elemento del DOM
+                    productCard.remove();
+                    //actualizar el contador en la interfaz
+                    updateProductCount();
+                    //mostrar mensaje de catalogo vacio si no quedan productos
+                    if(productCount === 0)
+                    {
+                        emptyCatalogMessage.style.display = 'block';
+                    }
+                }
+            }
+            
+            //actualizar el contador de productos en la interfaz de usuario
+            function updateProductCount()
+            {
+                productCountElement.textContent = `Total : ${productCount} productos`;
+            }
+
+            //limpiar todo el catalogo de productos
+            function clearCatalog()
+            {
+                //verificar que hay productos para eliminar
+                if (productCount === 0)
+                {
+                    alert("El catalgo ya esta vacio");
+                    return;
+                }
+
+                //pedir confirmacion antes de limpiar todo
+                if(confirm('¿Eliminar todos los productos?'))
+                {
+                    //vaciar el array de productos
+                    products = [];
+                    productCount = 0;
+                    //limpiar todo el contenido del catalogo en el DOM
+                    catalog.innerHTML = '';
+                    //mostrar el mensaje de catalogo vacio
+                    emptyCatalogMessage.style.display = 'block';
+                    //actualizar el contador
+                    updateProductCount();
+                }
+            }
+        </script>
+    </body>
+</html>
